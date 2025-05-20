@@ -87,6 +87,7 @@ def on_receive(data: dict) -> dict:
     query_type = data.get("query_type", None)
     target_node = data.get("target_node", None)
     raw_anomaly_data = data.get("anomaly_data", None)
+    raw_causal_relationships = data.get("causal_relationships", None)
 
     # Output variables
     message = None
@@ -112,8 +113,7 @@ def on_receive(data: dict) -> dict:
         observation = pd.DataFrame(deserialized_data)
 
         # Step 1.2: Parse causal relationships into a directed graph and initialize causal model
-        causal_relationship = ast.literal_eval(data["causal_relationships"].strip())
-        causal_graph = nx.DiGraph(causal_relationship)
+        causal_graph = nx.DiGraph(ast.literal_eval(raw_causal_relationships.strip()))
         causal_model = gcm.InvertibleStructuralCausalModel(causal_graph)
 
         # === START Query Selection ===
@@ -240,6 +240,7 @@ def on_receive(data: dict) -> dict:
             "status": "success",
             "message": message,
             "query_type": query_type,
+            "causal_relationships": raw_causal_relationships,
             "target_node": target_node,
             # For anomaly
             "anomaly_data": raw_anomaly_data,
@@ -261,6 +262,7 @@ def on_receive(data: dict) -> dict:
             "status": "error",
             "message": str(e),
             "query_type": query_type,
+            "causal_relationships": raw_causal_relationships,
             "target_node": target_node,
             # For anomaly
             "anomaly_data": raw_anomaly_data,
